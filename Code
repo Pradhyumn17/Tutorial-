@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VISIONARY — Creative Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Rajdhani:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dark: #8a6820;
+    --obsidian: #080808;
+    --deep: #0e0e0f;
+    --surface: #141416;
+    --surface2: #1c1c1f;
+    --white: #f5f0e8;
+    --gray: #6b6b72;
+    --gray-light: #9a9aa8;
+    --accent: #ff6b35;
+    --radius: 2px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    background: var(--obsidian);
+    color: var(--white);
+    font-family: 'Rajdhani', sans-serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* ─── CUSTOM CURSOR ─── */
+  #cursor {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%,-50%);
+    transition: transform 0.1s, width 0.3s, height 0.3s, background 0.3s;
+    mix-blend-mode: difference;
+  }
+  #cursor-ring {
+    position: fixed;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(201,168,76,0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%,-50%);
+    transition: transform 0.15s ease-out, width 0.3s, height 0.3s, border-color 0.3s;
+  }
+  body.hovering #cursor { width: 16px; height: 16px; background: var(--gold-light); }
+  body.hovering #cursor-ring { width: 60px; height: 60px; border-color: var(--gold); }
+
+  /* ─── CANVAS (3D BG) ─── */
+  #bg-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ─── LOADING SCREEN ─── */
+  #loader {
+    position: fixed;
+    inset: 0;
+    background: var(--obsidian);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+  }
+  #loader.hidden { opacity: 0; visibility: hidden; }
+  .loader-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 300;
+    letter-spacing: 0.5em;
+    color: var(--gold);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .loader-bar-wrap {
+    margin-top: 2rem;
+    width: 200px;
+    height: 1px;
+    background: rgba(201,168,76,0.2);
+    position: relative;
+    overflow: hidden;
+  }
+  .loader-bar {
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: var(--gold);
+    animation: loadBar 2s ease forwards;
+  }
+  .loader-percent {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--gold);
+    margin-top: 0.8rem;
+    letter-spacing: 0.3em;
+  }
+  @keyframes loadBar { to { left: 0; } }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    padding: 1.5rem 4vw;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to bottom, rgba(8,8,8,0.9), transparent);
+    backdrop-filter: blur(4px);
+    transition: padding 0.3s;
+  }
+  nav.scrolled {
+    padding: 1rem 4vw;
+    background: rgba(8,8,8,0.95);
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+  }
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-decoration: none;
+  }
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gray-light);
+    text-decoration: none;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0;
+    width: 0; height: 1px;
+    background: var(--gold);
+    transition: width 0.3s;
+  }
+  .nav-links a:hover { color: var(--gold); }
+  .nav-links a:hover::after { width: 100%; }
+
+  /* Hamburger */
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: none;
+    padding: 4px;
+  }
+  .hamburger span {
+    display: block;
+    width: 26px;
+    height: 1px;
+    background: var(--gold);
+    transition: transform 0.3s, opacity 0.3s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+  /* Mobile menu */
+  .mobile-menu {
+    position: fixed;
+    inset: 0;
+    background: rgba(8,8,8,0.98);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    transform: translateX(100%);
+    transition: transform 0.5s cubic-bezier(0.77,0,0.175,1);
+  }
+  .mobile-menu.open { transform: translateX(0); }
+  .mobile-menu a {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.5rem;
+    font-weight: 300;
+    color: var(--white);
+    text-decoration: none;
+    letter-spacing: 0.2em;
+    transition: color 0.3s;
+  }
+  .mobile-menu a:hover { color: var(--gold); }
+
+  /* ─── SECTIONS (General) ─── */
+  section { position: relative; z-index: 1; }
+
+  /* ─── HERO ─── */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 6vw;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.8s 2.3s forwards;
+  }
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3.5rem, 10vw, 10rem);
+    font-weight: 300;
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    color: var(--white);
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeUp 1s 2.5s forwards;
+    position: relative;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--gold);
+    font-weight: 300;
+  }
+  .hero-subtitle {
+    font-size: clamp(0.85rem, 1.5vw, 1rem);
+    font-weight: 400;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gray-light);
+    margin-top: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.8s 2.7s forwards;
+  }
+  .hero-cta {
+    margin-top: 3.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s 2.9s forwards;
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 1rem 2.5rem;
+    background: var(--gold);
+    color: var(--obsidian);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: none;
+    cursor: none;
+    transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--white);
+    transform: translateX(-101%);
+    transition: transform 0.4s cubic-bezier(0.77,0,0.175,1);
+  }
+  .btn-primary:hover::before { transform: translateX(0); }
+  .btn-primary:hover { box-shadow: 0 20px 60px rgba(201,168,76,0.3); }
+  .btn-primary span { position: relative; z-index: 1; }
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 1rem 2.5rem;
+    background: transparent;
+    color: var(--white);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid rgba(245,240,232,0.3);
+    cursor: none;
+    transition: border-color 0.3s, color 0.3s;
+  }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+  .hero-scroll {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s 3.2s forwards;
+  }
+  .hero-scroll span {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.3em;
+    color: var(--gray);
+    writing-mode: horizontal-tb;
+  }
+  .scroll-line {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    animation: scrollLine 2s ease-in-out infinite;
+  }
+  @keyframes scrollLine {
+    0% { transform: scaleY(0); transform-origin: top; }
+    50% { transform: scaleY(1); transform-origin: top; }
+    51% { transform: scaleY(1); transform-origin: bottom; }
+    100% { transform: scaleY(0); transform-origin: bottom; }
+  }
+
+  .hero-grid-lines {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+    background-size: 80px 80px;
+    pointer-events: none;
+  }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── REEL / SHOWREEL ─── */
+  #reel {
+    padding: 8rem 4vw;
+    position: relative;
+  }
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .section-label::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 1px;
+    background: var(--gold);
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.2rem, 5vw, 5rem);
+    font-weight: 300;
+    line-height: 1.05;
+    margin-bottom: 3rem;
+  }
+  .section-title em { font-style: italic; color: var(--gold); }
+
+  .reel-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: var(--surface);
+    border: 1px solid rgba(201,168,76,0.15);
+    overflow: hidden;
+    cursor: none;
+  }
+  .reel-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .reel-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(8,8,8,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.4s;
+  }
+  .reel-container.playing .reel-overlay { background: transparent; }
+  .play-btn {
+    width: 80px;
+    height: 80px;
+    border: 1px solid rgba(201,168,76,0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: none;
+    transition: transform 0.3s, border-color 0.3s, background 0.3s;
+    background: rgba(8,8,8,0.4);
+    backdrop-filter: blur(8px);
+  }
+  .play-btn:hover { transform: scale(1.15); border-color: var(--gold); background: rgba(201,168,76,0.1); }
+  .play-btn svg { margin-left: 4px; }
+  .reel-container.playing .play-btn { opacity: 0; pointer-events: none; }
+
+  /* Video Controls */
+  .video-controls {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 1.5rem 1.5rem 1rem;
+    background: linear-gradient(transparent, rgba(8,8,8,0.9));
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    transform: translateY(100%);
+    transition: transform 0.3s;
+  }
+  .reel-container:hover .video-controls { transform: translateY(0); }
+  .progress-bar {
+    width: 100%;
+    height: 2px;
+    background: rgba(255,255,255,0.2);
+    cursor: none;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--gold);
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+  .controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .ctrl-btn {
+    background: none;
+    border: none;
+    color: var(--white);
+    cursor: none;
+    padding: 4px;
+    transition: color 0.2s;
+  }
+  .ctrl-btn:hover { color: var(--gold); }
+  .time-display {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--gray-light);
+    letter-spacing: 0.05em;
+  }
+  .vol-slider {
+    -webkit-appearance: none;
+    width: 70px;
+    height: 2px;
+    background: rgba(255,255,255,0.3);
+    outline: none;
+    cursor: none;
+  }
+  .vol-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: none;
+  }
+
+  /* Reel placeholder (demo video look) */
+  .reel-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+    background: linear-gradient(135deg, #0e0e0f 0%, #1c1218 50%, #0e0e0f 100%);
+  }
+  .reel-placeholder-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    color: rgba(201,168,76,0.4);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+  .reel-placeholder-hint {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--gray);
+    letter-spacing: 0.2em;
+  }
+
+  /* ─── ABOUT / STATS ─── */
+  #about {
+    padding: 8rem 4vw;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: center;
+  }
+  .about-text p {
+    font-size: 1.05rem;
+    line-height: 1.85;
+    color: var(--gray-light);
+    margin-bottom: 1.5rem;
+    font-weight: 300;
+  }
+  .about-text p strong { color: var(--white); font-weight: 500; }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  .stat-card {
+    padding: 2rem;
+    border: 1px solid rgba(201,168,76,0.15);
+    background: rgba(20,20,22,0.6);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 2px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s;
+  }
+  .stat-card:hover { border-color: rgba(201,168,76,0.4); transform: translateY(-4px); }
+  .stat-card:hover::before { transform: scaleX(1); }
+  .stat-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 3.5rem;
+    font-weight: 300;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gray);
+  }
+
+  /* ─── WORK / PORTFOLIO ─── */
+  #work {
+    padding: 8rem 4vw;
+  }
+  .work-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 4rem;
+    flex-wrap: wrap;
+    gap: 2rem;
+  }
+
+  /* Filter tabs */
+  .filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .filter-tab {
+    padding: 0.5rem 1.2rem;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--gray);
+    cursor: none;
+    transition: all 0.3s;
+  }
+  .filter-tab.active, .filter-tab:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(201,168,76,0.05);
+  }
+
+  /* Portfolio grid */
+  .portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+  }
+  .portfolio-item {
+    position: relative;
+    overflow: hidden;
+    cursor: none;
+    background: var(--surface);
+    transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .portfolio-item:nth-child(1) { grid-column: span 7; }
+  .portfolio-item:nth-child(2) { grid-column: span 5; }
+  .portfolio-item:nth-child(3) { grid-column: span 4; }
+  .portfolio-item:nth-child(4) { grid-column: span 4; }
+  .portfolio-item:nth-child(5) { grid-column: span 4; }
+  .portfolio-item:nth-child(6) { grid-column: span 6; }
+  .portfolio-item:nth-child(7) { grid-column: span 6; }
+  .portfolio-item:hover { transform: scale(1.02); z-index: 2; }
+
+  .portfolio-thumb {
+    width: 100%;
+    aspect-ratio: 16/10;
+    position: relative;
+    overflow: hidden;
+  }
+  .portfolio-thumb video,
+  .portfolio-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+    display: block;
+  }
+  .portfolio-item:hover .portfolio-thumb video,
+  .portfolio-item:hover .portfolio-thumb img { transform: scale(1.08); }
+
+  /* Gradient placeholder for demo */
+  .thumb-placeholder {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  .portfolio-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(8,8,8,0);
+    display: flex;
+    align-items: flex-end;
+    padding: 1.5rem;
+    transition: background 0.4s;
+  }
+  .portfolio-item:hover .portfolio-overlay { background: rgba(8,8,8,0.6); }
+  .portfolio-info {
+    transform: translateY(10px);
+    opacity: 0;
+    transition: transform 0.4s, opacity 0.4s;
+    width: 100%;
+  }
+  .portfolio-item:hover .portfolio-info { transform: translateY(0); opacity: 1; }
+  .portfolio-info h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: var(--white);
+    margin-bottom: 0.3rem;
+  }
+  .portfolio-info p {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .portfolio-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 56px;
+    height: 56px;
+    border: 1px solid rgba(201,168,76,0.7);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8,8,8,0.5);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .portfolio-item:hover .portfolio-play { transform: translate(-50%,-50%) scale(1); }
+
+  /* ─── SERVICES ─── */
+  #services {
+    padding: 8rem 4vw;
+    background: var(--deep);
+  }
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    margin-top: 4rem;
+    background: rgba(201,168,76,0.1);
+  }
+  .service-card {
+    background: var(--obsidian);
+    padding: 3rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.4s;
+  }
+  .service-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(201,168,76,0.08) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .service-card:hover { background: var(--surface); }
+  .service-card:hover::before { opacity: 1; }
+  .service-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--gold);
+    letter-spacing: 0.3em;
+    margin-bottom: 2rem;
+  }
+  .service-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1.5rem;
+    color: var(--gold);
+  }
+  .service-card h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-weight: 300;
+    margin-bottom: 1rem;
+    color: var(--white);
+  }
+  .service-card p {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--gray);
+    font-weight: 300;
+  }
+  .service-line {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 0; height: 1px;
+    background: var(--gold);
+    transition: width 0.5s;
+  }
+  .service-card:hover .service-line { width: 100%; }
+
+  /* ─── LIGHTBOX ─── */
+  #lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    background: rgba(0,0,0,0.97);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  #lightbox.open { display: flex; }
+  .lightbox-inner {
+    position: relative;
+    max-width: 1000px;
+    width: 100%;
+  }
+  .lightbox-close {
+    position: absolute;
+    top: -3rem;
+    right: 0;
+    background: none;
+    border: none;
+    color: var(--gray);
+    font-size: 1.5rem;
+    cursor: none;
+    transition: color 0.2s;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.1em;
+    font-size: 0.75rem;
+  }
+  .lightbox-close:hover { color: var(--gold); }
+  .lightbox-video {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(201,168,76,0.2);
+  }
+  .lightbox-video video { width: 100%; height: 100%; object-fit: cover; }
+  .lightbox-title {
+    margin-top: 1.5rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 300;
+    color: var(--white);
+  }
+  .lightbox-category {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+  }
+
+  /* ─── CONTACT ─── */
+  #contact {
+    padding: 8rem 4vw;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .contact-glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(201,168,76,0.07) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    pointer-events: none;
+  }
+  #contact .section-title { margin: 0 auto 1.5rem; max-width: 700px; }
+  #contact > p {
+    font-size: 1rem;
+    color: var(--gray);
+    margin: 0 auto 3rem;
+    max-width: 500px;
+    line-height: 1.8;
+    font-weight: 300;
+  }
+  .contact-email {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.5rem, 4vw, 3rem);
+    font-weight: 300;
+    color: var(--gold);
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    transition: color 0.3s;
+    display: inline-block;
+    position: relative;
+  }
+  .contact-email::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0;
+    width: 0; height: 1px;
+    background: var(--gold);
+    transition: width 0.4s;
+  }
+  .contact-email:hover { color: var(--gold-light); }
+  .contact-email:hover::after { width: 100%; }
+  .contact-socials {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    margin-top: 3rem;
+  }
+  .social-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gray);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  .social-link:hover { color: var(--gold); }
+
+  /* ─── FOOTER ─── */
+  footer {
+    padding: 2rem 4vw;
+    border-top: 1px solid rgba(201,168,76,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  footer p {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--gray);
+    letter-spacing: 0.2em;
+  }
+
+  /* ─── REVEAL ANIMATIONS ─── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal-left.visible { opacity: 1; transform: translateX(0); }
+  .reveal-right {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+  /* Stagger children */
+  .stagger-children > * {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .stagger-children.visible > *:nth-child(1) { opacity:1; transform:none; transition-delay:0s; }
+  .stagger-children.visible > *:nth-child(2) { opacity:1; transform:none; transition-delay:0.1s; }
+  .stagger-children.visible > *:nth-child(3) { opacity:1; transform:none; transition-delay:0.2s; }
+  .stagger-children.visible > *:nth-child(4) { opacity:1; transform:none; transition-delay:0.3s; }
+  .stagger-children.visible > *:nth-child(5) { opacity:1; transform:none; transition-delay:0.4s; }
+  .stagger-children.visible > *:nth-child(6) { opacity:1; transform:none; transition-delay:0.5s; }
+  .stagger-children.visible > *:nth-child(7) { opacity:1; transform:none; transition-delay:0.6s; }
+
+  /* ─── TABLET ─── */
+  @media (max-width: 1024px) {
+    #about { grid-template-columns: 1fr; gap: 4rem; }
+    .services-grid { grid-template-columns: 1fr 1fr; }
+    .portfolio-item:nth-child(1) { grid-column: span 12; }
+    .portfolio-item:nth-child(2) { grid-column: span 12; }
+    .portfolio-item:nth-child(3) { grid-column: span 6; }
+    .portfolio-item:nth-child(4) { grid-column: span 6; }
+    .portfolio-item:nth-child(5) { grid-column: span 12; }
+    .portfolio-item:nth-child(6) { grid-column: span 6; }
+    .portfolio-item:nth-child(7) { grid-column: span 6; }
+  }
+
+  /* ─── MOBILE ─── */
+  @media (max-width: 768px) {
+    body { cursor: auto; }
+    #cursor, #cursor-ring { display: none; }
+    .hamburger { display: flex; }
+    .nav-links { display: none; }
+    nav { padding: 1.2rem 5vw; }
+
+    #hero { padding: 0 5vw; }
+    .hero-cta { flex-direction: column; align-items: center; }
+    .btn-primary, .btn-ghost { width: 100%; max-width: 280px; justify-content: center; }
+
+    #reel, #about, #work, #services, #contact { padding: 5rem 5vw; }
+
+    .services-grid { grid-template-columns: 1fr; }
+    .service-card { padding: 2rem 1.5rem; }
+
+    .portfolio-item:nth-child(n) { grid-column: span 12; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+
+    .work-header { flex-direction: column; align-items: flex-start; }
+    footer { flex-direction: column; text-align: center; }
+
+    #about { gap: 3rem; }
+  }
+
+  @media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .stat-number { font-size: 2.8rem; }
+  }
+
+  /* ─── DECORATIVE ELEMENTS ─── */
+  .gold-line {
+    width: 1px;
+    height: 80px;
+    background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+    margin: 2rem auto;
+  }
+
+  /* Noise texture overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9000;
+    opacity: 0.4;
+  }
+
+  /* Marquee */
+  .marquee-wrap {
+    overflow: hidden;
+    border-top: 1px solid rgba(201,168,76,0.1);
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    padding: 1rem 0;
+    background: var(--deep);
+  }
+  .marquee-track {
+    display: flex;
+    gap: 3rem;
+    animation: marquee 20s linear infinite;
+    width: max-content;
+  }
+  .marquee-item {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: rgba(201,168,76,0.4);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 3rem;
+  }
+  .marquee-item::after {
+    content: '✦';
+    color: var(--gold);
+    font-size: 0.5rem;
+    font-style: normal;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* 3D tilt card effect */
+  .tilt-card {
+    transform-style: preserve-3d;
+    transform: perspective(1000px);
+  }
+
+  /* Gradient shimmer on hover */
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  .shimmer-text {
+    background: linear-gradient(90deg, var(--gold-dark) 0%, var(--gold-light) 50%, var(--gold-dark) 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s linear infinite;
+  }
+</style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- 3D Canvas Background -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Loader -->
+<div id="loader">
+  <div class="loader-logo shimmer-text">VISIONARY</div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  <div class="loader-percent" id="loader-pct">LOADING...</div>
+</div>
+
+<!-- Navigation -->
+<nav id="navbar">
+  <a href="#hero" class="nav-logo">V I S I O N A R Y</a>
+  <ul class="nav-links">
+    <li><a href="#reel">Showreel</a></li>
+    <li><a href="#work">Work</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobile-menu">
+  <a href="#reel" class="mobile-link">Showreel</a>
+  <a href="#work" class="mobile-link">Work</a>
+  <a href="#about" class="mobile-link">About</a>
+  <a href="#services" class="mobile-link">Services</a>
+  <a href="#contact" class="mobile-link">Contact</a>
+</div>
+
+<!-- ─── HERO ─── -->
+<section id="hero">
+  <div class="hero-grid-lines"></div>
+  <div class="hero-eyebrow">Available for creative collaboration · 2025</div>
+  <h1 class="hero-title">
+    Crafting<br><em>Visual</em><br>Stories
+  </h1>
+  <p class="hero-subtitle">Video Editor &nbsp;·&nbsp; Colorist &nbsp;·&nbsp; Motion Designer</p>
+  <div class="hero-cta">
+    <a href="#work" class="btn-primary"><span>View My Work</span></a>
+    <a href="#contact" class="btn-ghost">Get In Touch</a>
+  </div>
+  <div class="hero-scroll">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- Marquee -->
+<div class="marquee-wrap">
+  <div class="marquee-track" id="marquee-track">
+    <div class="marquee-item">Cinema &amp; Film</div>
+    <div class="marquee-item">Commercial Editing</div>
+    <div class="marquee-item">Color Grading</div>
+    <div class="marquee-item">Motion Graphics</div>
+    <div class="marquee-item">Documentary</div>
+    <div class="marquee-item">Music Video</div>
+    <div class="marquee-item">Brand Films</div>
+    <div class="marquee-item">Social Content</div>
+    <div class="marquee-item">Cinema &amp; Film</div>
+    <div class="marquee-item">Commercial Editing</div>
+    <div class="marquee-item">Color Grading</div>
+    <div class="marquee-item">Motion Graphics</div>
+    <div class="marquee-item">Documentary</div>
+    <div class="marquee-item">Music Video</div>
+    <div class="marquee-item">Brand Films</div>
+    <div class="marquee-item">Social Content</div>
+  </div>
+</div>
+
+<!-- ─── SHOWREEL ─── -->
+<section id="reel">
+  <div class="section-label reveal">Showreel 2025</div>
+  <div class="section-title reveal">
+    The <em>Art</em> of<br>Storytelling
+  </div>
+  <div class="reel-container reveal" id="main-reel">
+    <div class="reel-placeholder">
+      <div style="text-align:center">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style="margin-bottom:1rem;opacity:0.3">
+          <rect x="8" y="12" width="48" height="40" rx="3" stroke="#c9a84c" stroke-width="1.5"/>
+          <path d="M26 24L42 32L26 40V24Z" fill="#c9a84c" opacity="0.7"/>
+          <line x1="8" y1="20" x2="56" y2="20" stroke="#c9a84c" stroke-width="1" opacity="0.3"/>
+          <line x1="8" y1="44" x2="56" y2="44" stroke="#c9a84c" stroke-width="1" opacity="0.3"/>
+        </svg>
+        <div class="reel-placeholder-text">Your Showreel</div>
+        <div class="reel-placeholder-hint" style="margin-top:0.5rem">Replace src with your video URL</div>
+      </div>
+    </div>
+    <div class="reel-overlay">
+      <button class="play-btn" id="main-play-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M5 3L19 12L5 21V3Z" fill="#c9a84c"/>
+        </svg>
+      </button>
+    </div>
+    <div class="video-controls">
+      <div class="progress-bar" id="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="controls-row">
+        <div style="display:flex;align-items:center;gap:0.8rem">
+          <button class="ctrl-btn" id="play-pause-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5 3L19 12L5 21V3Z"/>
+            </svg>
+          </button>
+          <div class="time-display" id="time-display">0:00 / 0:00</div>
+          <input type="range" class="vol-slider" id="vol-slider" min="0" max="1" step="0.05" value="1">
+        </div>
+        <button class="ctrl-btn" id="fullscreen-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── WORK ─── -->
+<section id="work">
+  <div class="work-header">
+    <div>
+      <div class="section-label reveal">Selected Work</div>
+      <div class="section-title reveal">Recent <em>Projects</em></div>
+    </div>
+    <div class="filter-tabs reveal" id="filter-tabs">
+      <button class="filter-tab active" data-filter="all">All</button>
+      <button class="filter-tab" data-filter="film">Film</button>
+      <button class="filter-tab" data-filter="commercial">Commercial</button>
+      <button class="filter-tab" data-filter="music">Music</button>
+      <button class="filter-tab" data-filter="doc">Doc</button>
+    </div>
+  </div>
+  <div class="portfolio-grid" id="portfolio-grid">
+
+    <div class="portfolio-item tilt-card" data-category="film" data-title="Nocturne" data-cat-label="Short Film · 2024">
+      <div class="portfolio-thumb">
+        <div class="thumb-placeholder" style="background:linear-gradient(135deg,#1a1020 0%,#2d1b4e 50%,#0d0d1a 100%);display:flex;align-items:center;justify-content:center;">
+          <div style="text-align:center;padding:2rem">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,4rem);font-weight:300;color:rgba(201,168,76,0.3);letter-spacing:0.3em">NOCTURNE</div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:rgba(107,107,114,0.6);letter-spacing:0.3em;margin-top:0.5rem">SHORT FILM</div>
+          </div>
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="portfolio-play">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#c9a84c"><path d="M5 3L19 12L5 21V3Z"/></svg>
+        </div>
+        <div class="portfolio-info">
+          <h3>Nocturne</h3>
+          <p>Short Film · 2024</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="portfolio-item tilt-card" data-category="commercial" data-title="Apex Brand Film" data-cat-label="Commercial · 2024">
+      <div class="portfolio-thumb">
+        <div class="thumb-placeholder" style="background:linear-gradient(135deg,#0d1a0d 0%,#1a3a1a 50%,#0a0f0a 100%);display:flex;align-items:center;justify-content:center;">
+          <div style="text-align:center;padding:2rem">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3vw,2.5rem);font-weight:300;color:rgba(201,168,76,0.3);letter-spacing:0.3em">APEX</div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:rgba(107,107,114,0.6);letter-spacing:0.3em;margin-top:0.5rem">BRAND FILM</div>
+          </div>
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="portfolio-play">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#c9a84c"><path d="M5 3L19 12L5 21V3Z"/></svg>
+        </div>
+        <div class="portfolio-info">
+          <h3>Apex Brand Film</h3>
+          <p>Commercial · 2024</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="portfolio-item tilt-card" data-category="music" data-title="Echoes" data-cat-label="Music Video · 2024">
+      <div class="portfolio-thumb">
+        <div class="thumb-placeholder" style="background:linear-gradient(135deg,#1a0a0a 0%,#3d1010 50%,#0f0808 100%);display:flex;align-items:center;justify-content:center;">
+          <div style="text-align:center;padding:2rem">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3vw,2.2rem);font-weight:300;color:rgba(201,168,76,0.3);letter-spacing:0.3em">ECHOES</div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:rgba(107,107,114,0.6);letter-spacing:0.3em;margin-top:0.5rem">MUSIC VIDEO</div>
+          </div>
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="portfolio-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#c9a84c"><path d="M5 3L19 12L5 21V3Z"/></svg></div>
+        <div class="portfolio-info"><h3>Echoes</h3><p>Music Video · 2024</p></div>
+      </div>
+    </div>
+
+    <div class="portfolio-item tilt-card" data-category="doc" data-title="Roots" data-cat-label="Documentary · 2023">
+      <div class="portfolio-thumb">
+        <div class="thumb-placeholder" style="background:linear-gradient(135deg,#0d0d0a 0%,#2a2a0f 50%,#111108 100%);display:flex;align-items:center;justify-content:center;">
+          <div style="text-align:center;padding:2rem">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3vw,2.2rem);font-weight:300;color:rgba(201,168,76,0.3);letter-spacing:0.3em">ROOTS</div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:rgba(107,107,114,0.6);letter-spacing:0.3em;margin-top:0.5rem">DOCUMENTARY</div>
+          </div>
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="portfolio-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#c9a84c"><path d="M5 3L19 12L5 21V3Z"/></svg></div>
+        <div class="portfolio-info"><h3>Roots</h3><p>Documentary · 2023</p></div>
+      </div>
+    </div>
+
+    <div class="portfolio-item tilt-card" data-category="commercial" data-title="Luxe Campaign" data-cat-label="Commercial · 2023">
+      <div class="portfolio-thumb">
+        <div class="thumb-placeholder" style="background:linear-gradient(135deg,#1a1205 0%,#3d2d0a 50%,#120e03 100%);display:flex;align-items:center;justify-content:center;">
+          <div style="text-align:center;padding:2rem">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3vw,2.2rem);font-weight:300;color:rgba(201,168,76,0.3);letter-spacing:0.3em">LUXE</div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:rgba(107,107,114,0.6);letter-spacing:0.3em;margin-top:0.5rem">CAMPAIGN</div>
+          </div>
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="portfolio-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#c9a84c"><path d="M5 3L19 12L5 21V3Z"/></svg></div>
+        <div class="portfolio-info"><h3>Luxe Campaign</h3><p>Commercial · 2023</p></div>
+      </div>
+    </div>
+
+    <div class="portfolio-item tilt-card" data-category="film" data-title="The Drift" data-cat-label="Short Film · 2023">
+      <div class="portfolio-thumb">
+        <div class="thumb-placeholder" style="background:linear-gradient(135deg,#05101a 0%,#0a2540 50%,#030a10 100%);display:flex;align-items:center;justify-content:center;">
+          <div style="text-align:center;padding:2rem">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3vw,2.2rem);font-weight:300;color:rgba(201,168,76,0.3);letter-spacing:0.3em">THE DRIFT</div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:rgba(107,107,114,0.6);letter-spacing:0.3em;margin-top:0.5rem">SHORT FILM</div>
+          </div>
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="portfolio-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#c9a84c"><path d="M5 3L19 12L5 21V3Z"/></svg></div>
+        <div class="portfolio-info"><h3>The Drift</h3><p>Short Film · 2023</p></div>
+      </div>
+    </div>
+
+    <div class="portfolio-item tilt-card" data-category="music" data-title="Neon Pulse" data-cat-label="Music Video · 2023">
+      <div class="portfolio-thumb">
+        <div class="thumb-placeholder" style="background:linear-gradient(135deg,#0a0515 0%,#1a0a2d 50%,#060310 100%);display:flex;align-items:center;justify-content:center;">
+          <div style="text-align:center;padding:2rem">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3vw,2.2rem);font-weight:300;color:rgba(201,168,76,0.3);letter-spacing:0.3em">NEON PULSE</div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:rgba(107,107,114,0.6);letter-spacing:0.3em;margin-top:0.5rem">MUSIC VIDEO</div>
+          </div>
+        </div>
+      </div>
+      <div class="portfolio-overlay">
+        <div class="portfolio-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#c9a84c"><path d="M5 3L19 12L5 21V3Z"/></svg></div>
+        <div class="portfolio-info"><h3>Neon Pulse</h3><p>Music Video · 2023</p></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── ABOUT ─── -->
+<section id="about">
+  <div class="about-text reveal-left">
+    <div class="section-label">About Me</div>
+    <h2 class="section-title">A Vision<br><em>Beyond</em><br>the Frame</h2>
+    <p>I'm a <strong>video editor and visual storyteller</strong> with a decade of experience crafting cinematic narratives for brands, filmmakers, and creators who refuse to be ordinary.</p>
+    <p>My work lives at the intersection of <strong>technical precision</strong> and <strong>artistic intuition</strong> — from razor-sharp cuts to lush color grades that breathe emotion into every frame.</p>
+    <p>Based globally. Working with clients who understand that <strong>great editing is invisible</strong> — and unforgettable.</p>
+    <div style="margin-top:2.5rem">
+      <a href="#contact" class="btn-primary"><span>Work Together</span></a>
+    </div>
+  </div>
+  <div class="stats-grid stagger-children reveal-right">
+    <div class="stat-card">
+      <div class="stat-number">10+</div>
+      <div class="stat-label">Years Experience</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">240+</div>
+      <div class="stat-label">Projects Delivered</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">85+</div>
+      <div class="stat-label">Happy Clients</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">12</div>
+      <div class="stat-label">Awards Won</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SERVICES ─── -->
+<section id="services">
+  <div style="max-width:600px;margin-bottom:4rem" class="reveal">
+    <div class="section-label">What I Do</div>
+    <h2 class="section-title">Craft &amp; <em>Expertise</em></h2>
+  </div>
+  <div class="services-grid stagger-children">
+    <div class="service-card">
+      <div class="service-num">01</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="4" y="10" width="40" height="28" rx="2"/>
+        <path d="M18 20L30 24L18 28V20Z" fill="currentColor" opacity="0.6"/>
+        <line x1="4" y1="16" x2="44" y2="16" stroke-width="1" opacity="0.5"/>
+        <line x1="4" y1="32" x2="44" y2="32" stroke-width="1" opacity="0.5"/>
+      </svg>
+      <h3>Video Editing</h3>
+      <p>Narrative-driven cuts that hold attention and build emotion. From assembly to final export — every edit serves the story.</p>
+      <div class="service-line"></div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">02</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="24" cy="24" r="18"/>
+        <circle cx="24" cy="24" r="8"/>
+        <path d="M24 6v4M24 38v4M6 24h4M38 24h4" stroke-linecap="round"/>
+        <path d="M12.1 12.1l2.8 2.8M33.1 33.1l2.8 2.8M12.1 35.9l2.8-2.8M33.1 14.9l2.8-2.8" stroke-linecap="round" opacity="0.6"/>
+      </svg>
+      <h3>Color Grading</h3>
+      <p>Cinematic color science that transforms footage into art. DaVinci Resolve workflows crafted for mood, genre, and brand.</p>
+      <div class="service-line"></div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">03</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="6" y="8" width="36" height="24" rx="2"/>
+        <path d="M16 40h16M24 32v8" stroke-linecap="round"/>
+        <path d="M14 18l6 6 8-8" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+        <circle cx="36" cy="14" r="3" fill="currentColor" opacity="0.5"/>
+      </svg>
+      <h3>Motion Graphics</h3>
+      <p>Dynamic titles, lower thirds, and animated sequences that blend seamlessly into your visual language.</p>
+      <div class="service-line"></div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">04</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M8 36L24 12L40 36H8Z" opacity="0.6"/>
+        <circle cx="24" cy="12" r="3" fill="currentColor"/>
+        <line x1="8" y1="36" x2="40" y2="36"/>
+        <path d="M17 28h14" stroke-linecap="round" opacity="0.5"/>
+      </svg>
+      <h3>Sound Design</h3>
+      <p>Atmospheric mixing, music supervision, and audio sweetening. Because great visuals deserve equally great sound.</p>
+      <div class="service-line"></div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">05</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="4" y="14" width="24" height="20" rx="2"/>
+        <path d="M28 20l10-6v20l-10-6V20Z"/>
+        <circle cx="16" cy="24" r="4" fill="currentColor" opacity="0.4"/>
+      </svg>
+      <h3>Social Content</h3>
+      <p>Platform-optimised cuts for Instagram, TikTok, YouTube — engineered for retention and scroll-stopping impact.</p>
+      <div class="service-line"></div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">06</div>
+      <svg class="service-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M24 4L44 14V34L24 44L4 34V14L24 4Z"/>
+        <path d="M24 4v40M4 14l20 10 20-10" opacity="0.5"/>
+        <circle cx="24" cy="24" r="4" fill="currentColor" opacity="0.5"/>
+      </svg>
+      <h3>VFX Integration</h3>
+      <p>Seamless compositing, tracking, and visual effects that enhance storytelling without breaking immersion.</p>
+      <div class="service-line"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CONTACT ─── -->
+<section id="contact">
+  <div class="contact-glow"></div>
+  <div class="section-label reveal" style="justify-content:center">Let's Create</div>
+  <h2 class="section-title reveal">Ready to Make<br>Something <em>Extraordinary?</em></h2>
+  <p class="reveal">I take on a limited number of projects each season to ensure every client receives exceptional attention and craft.</p>
+  <div class="gold-line"></div>
+  <a href="mailto:hello@visionary.studio" class="contact-email reveal">hello@visionary.studio</a>
+  <div class="contact-socials reveal">
+    <a href="#" class="social-link">Instagram</a>
+    <a href="#" class="social-link">Vimeo</a>
+    <a href="#" class="social-link">LinkedIn</a>
+    <a href="#" class="social-link">YouTube</a>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <p>© 2025 VISIONARY STUDIO — ALL RIGHTS RESERVED</p>
+  <p style="font-style:italic;font-family:'Cormorant Garamond',serif;font-size:0.8rem;color:rgba(201,168,76,0.5)">Crafted with precision &amp; passion</p>
+</footer>
+
+<!-- ─── LIGHTBOX ─── -->
+<div id="lightbox">
+  <div class="lightbox-inner">
+    <button class="lightbox-close" id="lightbox-close">[ CLOSE ]</button>
+    <div class="lightbox-video">
+      <div style="text-align:center;padding:3rem">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:rgba(201,168,76,0.5);letter-spacing:0.3em" id="lightbox-placeholder">VIDEO PREVIEW</div>
+        <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:#6b6b72;letter-spacing:0.2em;margin-top:1rem">Replace with your video embed or &lt;video&gt; element</div>
+      </div>
+    </div>
+    <div class="lightbox-title" id="lightbox-title"></div>
+    <div class="lightbox-category" id="lightbox-cat"></div>
+  </div>
+</div>
+
+<script>
+// ─── LOADER ───
+let progress = 0;
+const loaderPct = document.getElementById('loader-pct');
+const loader = document.getElementById('loader');
+const interval = setInterval(() => {
+  progress += Math.random() * 15;
+  if (progress >= 100) {
+    progress = 100;
+    clearInterval(interval);
+    setTimeout(() => { loader.classList.add('hidden'); }, 400);
+  }
+  loaderPct.textContent = Math.floor(progress) + '%';
+}, 120);
+
+// ─── CURSOR ───
+const cursor = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursor-ring');
+let mouseX = 0, mouseY = 0;
+let ringX = 0, ringY = 0;
+
+document.addEventListener('mousemove', e => {
+  mouseX = e.clientX; mouseY = e.clientY;
+  cursor.style.left = mouseX + 'px';
+  cursor.style.top = mouseY + 'px';
+});
+
+function animateCursor() {
+  ringX += (mouseX - ringX) * 0.12;
+  ringY += (mouseY - ringY) * 0.12;
+  cursorRing.style.left = ringX + 'px';
+  cursorRing.style.top = ringY + 'px';
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+document.querySelectorAll('a,button,.portfolio-item,.stat-card,.service-card,.filter-tab').forEach(el => {
+  el.addEventListener('mouseenter', () => document.body.classList.add('hovering'));
+  el.addEventListener('mouseleave', () => document.body.classList.remove('hovering'));
+});
+
+// ─── NAVBAR SCROLL ───
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 80);
+});
+
+// ─── HAMBURGER ───
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobile-menu');
+hamburger.addEventListener('click', () => {
+  hamburger.classList.toggle('open');
+  mobileMenu.classList.toggle('open');
+  document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
+});
+document.querySelectorAll('.mobile-link').forEach(link => {
+  link.addEventListener('click', () => {
+    hamburger.classList.remove('open');
+    mobileMenu.classList.remove('open');
+    document.body.style.overflow = '';
+  });
+});
+
+// ─── 3D PARTICLE CANVAS ───
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [], mouse = {x: -9999, y: -9999};
+
+function resizeCanvas() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+document.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+const PARTICLE_COUNT = window.innerWidth < 768 ? 60 : 120;
+const GOLD = 'rgba(201,168,76,';
+const LINE_DIST = 130;
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * W;
+    this.y = Math.random() * H;
+    this.vx = (Math.random() - 0.5) * 0.35;
+    this.vy = (Math.random() - 0.5) * 0.35;
+    this.r = Math.random() * 1.2 + 0.3;
+    this.alpha = Math.random() * 0.4 + 0.1;
+  }
+  update() {
+    // Mouse repulsion
+    const dx = this.x - mouse.x, dy = this.y - mouse.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist < 100) {
+      this.vx += dx / dist * 0.4;
+      this.vy += dy / dist * 0.4;
+    }
+    this.vx *= 0.99; this.vy *= 0.99;
+    this.x += this.vx; this.y += this.vy;
+    if (this.x < 0 || this.x > W) this.vx *= -1;
+    if (this.y < 0 || this.y > H) this.vy *= -1;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+    ctx.fillStyle = GOLD + this.alpha + ')';
+    ctx.fill();
+  }
+}
+
+for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle());
+
+let animFrame;
+function drawParticles() {
+  ctx.clearRect(0, 0, W, H);
+  // Draw lines
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i+1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < LINE_DIST) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = GOLD + (0.08 * (1 - dist/LINE_DIST)) + ')';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+  particles.forEach(p => { p.update(); p.draw(); });
+  animFrame = requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+// ─── SCROLL REVEAL ───
+const revealEls = document.querySelectorAll('.reveal,.reveal-left,.reveal-right,.stagger-children');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1 });
+revealEls.forEach(el => observer.observe(el));
+
+// ─── FILTER TABS ───
+const filterTabs = document.querySelectorAll('.filter-tab');
+const portfolioItems = document.querySelectorAll('.portfolio-item');
+filterTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    filterTabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const filter = tab.dataset.filter;
+    portfolioItems.forEach(item => {
+      const cat = item.dataset.category;
+      if (filter === 'all' || cat === filter) {
+        item.style.opacity = '1';
+        item.style.transform = 'scale(1)';
+        item.style.pointerEvents = 'auto';
+      } else {
+        item.style.opacity = '0.2';
+        item.style.transform = 'scale(0.97)';
+        item.style.pointerEvents = 'none';
+      }
+    });
+  });
+});
+
+// ─── LIGHTBOX ───
+const lightbox = document.getElementById('lightbox');
+const lightboxTitle = document.getElementById('lightbox-title');
+const lightboxCat = document.getElementById('lightbox-cat');
+const lightboxClose = document.getElementById('lightbox-close');
+
+portfolioItems.forEach(item => {
+  item.addEventListener('click', () => {
+    lightboxTitle.textContent = item.dataset.title || '';
+    lightboxCat.textContent = item.dataset.catLabel || '';
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  });
+});
+lightboxClose.addEventListener('click', closeLightbox);
+lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+function closeLightbox() {
+  lightbox.classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// ─── MAIN VIDEO CONTROLS ───
+// (Uses placeholder UI since no actual video src is set by default)
+const reelContainer = document.getElementById('main-reel');
+const mainPlayBtn = document.getElementById('main-play-btn');
+const playPauseBtn = document.getElementById('play-pause-btn');
+const progressFill = document.getElementById('progress-fill');
+const progressBar = document.getElementById('progress-bar');
+const timeDisplay = document.getElementById('time-display');
+const volSlider = document.getElementById('vol-slider');
+const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+// Demo progress animation for placeholder
+let demoProgress = 0;
+let demoPlaying = false;
+let demoTimer;
+let demoTotal = 180; // fake 3min
+
+mainPlayBtn.addEventListener('click', toggleDemo);
+playPauseBtn.addEventListener('click', toggleDemo);
+reelContainer.addEventListener('click', e => {
+  if (e.target === reelContainer || e.target.closest('.reel-placeholder')) toggleDemo();
+});
+
+function formatTime(sec) {
+  const m = Math.floor(sec/60), s = Math.floor(sec%60);
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+function toggleDemo() {
+  demoPlaying = !demoPlaying;
+  if (demoPlaying) {
+    reelContainer.classList.add('playing');
+    playPauseBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+    demoTimer = setInterval(() => {
+      if (demoProgress >= demoTotal) { demoProgress = 0; }
+      demoProgress += 0.5;
+      const pct = (demoProgress / demoTotal) * 100;
+      progressFill.style.width = pct + '%';
+      timeDisplay.textContent = `${formatTime(demoProgress)} / ${formatTime(demoTotal)}`;
+    }, 500);
+  } else {
+    reelContainer.classList.remove('playing');
+    playPauseBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3L19 12L5 21V3Z"/></svg>`;
+    clearInterval(demoTimer);
+  }
+}
+
+progressBar.addEventListener('click', e => {
+  const rect = progressBar.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  demoProgress = pct * demoTotal;
+  progressFill.style.width = (pct*100) + '%';
+  timeDisplay.textContent = `${formatTime(demoProgress)} / ${formatTime(demoTotal)}`;
+});
+
+fullscreenBtn.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    reelContainer.requestFullscreen && reelContainer.requestFullscreen();
+  } else {
+    document.exitFullscreen && document.exitFullscreen();
+  }
+});
+
+// ─── 3D TILT ON PORTFOLIO ITEMS ───
+document.querySelectorAll('.tilt-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    card.style.transform = `perspective(800px) rotateY(${x*8}deg) rotateX(${-y*8}deg) scale(1.02)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = 'perspective(800px) rotateY(0) rotateX(0) scale(1)';
+  });
+});
+
+// ─── SMOOTH NAV LINKS ───
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+});
+
+// ─── PARALLAX ON HERO ───
+window.addEventListener('scroll', () => {
+  const scrollY = window.scrollY;
+  const heroTitle = document.querySelector('.hero-title');
+  const heroEyebrow = document.querySelector('.hero-eyebrow');
+  if (heroTitle) heroTitle.style.transform = `translateY(${scrollY * 0.15}px)`;
+  if (heroEyebrow) heroEyebrow.style.transform = `translateY(${scrollY * 0.1}px)`;
+});
+
+// Pause particles when tab not visible (performance)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) cancelAnimationFrame(animFrame);
+  else drawParticles();
+});
+</script>
+</body>
+</html>
